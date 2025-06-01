@@ -1,0 +1,320 @@
+@extends('layouts.auth')
+
+@section('title', 'Tambah Data Lokasi')
+
+@section('content')
+    <div class="max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden p-12">
+        <h3 class="text-2xl font-bold mb-4 text-gray-800">Tambahkan Lokasi Pengungsian!</h3>
+
+        <form action="{{route('lokasi.store')}}" method="POST" class="mt-4" enctype="multipart/form-data">
+        
+            @csrf
+            <!-- Di form blade Anda -->
+            <input type="hidden" name="relawan_id" value="{{ auth()->user()->relawan->id }}">
+            <!-- Nama Lokasi Field -->
+            <div class="space-y-2">
+                <label for="nama_lokasi" class="block text-sm font-medium text-gray-700">Nama Lokasi</label>
+                    <input type="text" id="nama_lokasi" name="nama_lokasi" value="{{old('nama_lokasi')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('nama_lokasi') border-red-500 @enderror">
+                    @error('nama_lokasi')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+            </div>
+
+            <!-- Nama Desa Field -->
+            <div class="space-y-2">
+                <label for="desa_id" class="block text-sm font-medium text-gray-700">Nama Desa</label>
+                <select 
+                    name="desa_id" 
+                    id="desa_id"
+                    class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('desa_id') border-red-500 @enderror"
+                >
+                    @foreach ($desas as $desa)
+                        <option value="{{$desa->id}}" @if (old('desa_id') == $desa->id) selected @endif
+                            >{{$desa->nama_desa}}
+                        </option>
+                    @endforeach
+                </select>
+
+                @error('desa_id')
+                <div class="invalid-feedback">
+                    {{$message}}
+                </div>
+                @enderror
+            </div>
+
+            <!-- Alamat Lokasi Field -->
+            <div class="space-y-2">
+                <label for="alamat_lokasi" class="block text-sm font-medium text-gray-700">Alamat Lokasi</label>
+                <input type="text" id="alamat_lokasi" name="alamat_lokasi" value="{{old('alamat_lokasi')}}"
+                    class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('alamat_lokasi') border-red-500 @enderror">
+                @error('alamat_lokasi')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Panjang Lokasi Field -->
+                <div class="space-y-2">
+                    <label for="panjang" class="block text-sm font-medium text-gray-700">Panjang Lokasi (meter)</label>
+                    <input type="number" step="0.01" id="panjang" name="panjang" value="{{old('panjang')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('panjang') border-red-500 @enderror"
+                        oninput="hitungSemua()">
+                    @error('panjang')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Lebar Lokasi Field -->
+                <div class="space-y-2">
+                    <label for="lebar" class="block text-sm font-medium text-gray-700">Lebar Lokasi (meter)</label>
+                    <input type="number" step="0.01" id="lebar" name="lebar" value="{{old('lebar')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('lebar') border-red-500 @enderror"
+                        oninput="hitungSemua()">
+                    @error('lebar')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Luas Lokasi Field -->
+                <div class="space-y-2">
+                    <label for="luas_lokasi" class="block text-sm font-medium text-gray-700">Luas Lokasi (m²)</label>
+                    <input type="number" step="0.01" id="luas_lokasi" name="luas_lokasi" value="{{old('luas_lokasi')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-100 @error('luas_lokasi') border-red-500 @enderror"
+                        readonly>
+                    @error('luas_lokasi')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Kapasitas Pengungsi Field -->
+                <div class="space-y-2">
+                    <label for="kapasitas_pengungsi" class="block text-sm font-medium text-gray-700">Kapasitas Lokasi (orang)</label>
+                    <input type="number" id="kapasitas_pengungsi" name="kapasitas_pengungsi" value="{{old('kapasitas_pengungsi')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-100 @error('kapasitas_pengungsi') border-red-500 @enderror"
+                        readonly>
+                    @error('kapasitas_pengungsi')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <p class="text-xs text-gray-500 mt-1">*Dihitung dari luas lokasi dibagi 3.5 m² per orang</p>
+                </div>
+
+                <!-- Gambar Lokasi Field -->
+                <div class="space-y-2">
+                    <label for="gambar_lokasi" class="block text-sm font-medium text-gray-700">Gambar Lokasi</label>
+                    <input type="file" id="gambar_lokasi" name="gambar_lokasi" value="{{old('gambar_lokasi')}}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-1 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('gambar_lokasi') border-red-500 @enderror">
+                    @error('gambar_lokasi')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- latitude Lokasi Field -->
+                <div class="space-y-2">
+                    <label for="latitude" class="block text-sm font-medium text-gray-700">Koordinat Lokasi (latitude)</label>
+                    <input type="text" id="latitude" name="latitude" value="{{old('latitude')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('latitude') border-red-500 @enderror">
+                    @error('latitude')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- longitude Lokasi Field -->
+                <div class="space-y-2">
+                    <label for="longitude" class="block text-sm font-medium text-gray-700">Koordinat Lokasi (longitude)</label>
+                    <input type="text" id="longitude" name="longitude" value="{{old('longitude')}}"
+                        class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('longitude') border-red-500 @enderror">
+                    @error('longitude')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Card Kebutuhan Sphere Pra Bencana -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden mt-6">
+                    <!-- Card Header -->
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-lg font-semibold text-gray-800">Kebutuhan Sphere Pra Bencana</h3>
+                        <p class="text-sm text-gray-500 mt-1">Perhitungan Berdasarkan Standar Proyek Sphere</p>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Air Kebutuhan Hidup -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Air Kebutuhan Hidup</label>
+                                <div class="relative">
+                                    <input type="number" id="air_hidup" name="air_hidup" value="{{old('air_hidup')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('air_hidup') border-red-500 @enderror">
+                                    @error('air_hidup')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">liter/hari</span>
+                                </div>
+                                <p class="text-xs text-gray-500">3 liter/orang/hari</p>
+                            </div>
+
+                            <!-- Air Kebersihan -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Air Kebersihan</label>
+                                <div class="relative">
+                                    <input type="number" id="air_kebersihan" name="air_kebersihan" value="{{old('air_kebersihan')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('air_kebersihan') border-red-500 @enderror">
+                                    @error('air_kebersihan')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">liter/hari</span>
+                                </div>
+                                <p class="text-xs text-gray-500">6 liter/orang/hari</p>
+                            </div>
+
+                            <!-- Air untuk Memasak -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Air untuk Memasak</label>
+                                <div class="relative">
+                                    <input type="number" id="air_memasak" name="air_memasak" value="{{old('air_memasak')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('air_memasak') border-red-500 @enderror">
+                                    @error('air_memasak')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">liter/hari</span>
+                                </div>
+                                <p class="text-xs text-gray-500">6 liter/orang/hari</p>
+                            </div>
+
+                            <!-- Toilet Jangka Pendek -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Toilet Jangka Pendek</label>
+                                <div class="relative">
+                                    <input type="number" id="toilet_pendek" name="toilet_pendek" value="{{old('toilet_pendek')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('toilet_pendek') border-red-500 @enderror">
+                                    @error('toilet_pendek')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">unit</span>
+                                </div>
+                                <p class="text-xs text-gray-500">1 toilet per 20 orang</p>
+                            </div>
+
+                            <!-- Toilet Jangka Panjang -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Toilet Jangka Panjang</label>
+                                <div class="relative">
+                                    <input type="number" id="toilet_panjang" name="toilet_panjang" value="{{old('toilet_panjang')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('toilet_panjang') border-red-500 @enderror">
+                                    @error('toilet_panjang')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">unit</span>
+                                </div>
+                                <p class="text-xs text-gray-500">1 toilet per 50 orang</p>
+                            </div>
+
+                            <!-- Kalori per Hari -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Kalori per Hari</label>
+                                <div class="relative">
+                                    <input type="number" id="kalori" name="kalori" value="{{old('kalori')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('kalori') border-red-500 @enderror">
+                                    @error('kalori')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">kCal/hari</span>
+                                </div>
+                                <p class="text-xs text-gray-500">2100 kCal/orang/hari</p>
+                            </div>
+
+                            <!-- Protein per Hari -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Protein per Hari</label>
+                                <div class="relative">
+                                    <input type="number" id="protein" name="protein" value="{{old('protein')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('protein') border-red-500 @enderror">
+                                    @error('protein')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">gram/hari</span>
+                                </div>
+                                <p class="text-xs text-gray-500">53 gram/orang/hari</p>
+                            </div>
+
+                            <!-- Lemak per Hari -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">Lemak per Hari</label>
+                                <div class="relative">
+                                    <input type="number" id="lemak" name="lemak" value="{{old('lemak')}}" readonly
+                                        class="w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 @error('lemak') border-red-500 @enderror">
+                                    @error('lemak')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                    <span class="absolute right-3 top-2 text-gray-500">gram/hari</span>
+                                </div>
+                                <p class="text-xs text-gray-500">40 gram/orang/hari</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 mt-2" type="submit">
+                Simpan Data
+            </button>
+        </form>
+    </div>
+
+<script>
+    function hitungSemua() {
+        // Hitung luas dan kapasitas terlebih dahulu
+        const panjang = parseFloat(document.getElementById('panjang').value) || 0;
+        const lebar = parseFloat(document.getElementById('lebar').value) || 0;
+        
+        // Hitung luas
+        const luas = panjang * lebar;
+        document.getElementById('luas_lokasi').value = luas.toFixed(2);
+        
+        // Hitung kapasitas
+        const kapasitas = Math.round(luas / 3.5);
+        document.getElementById('kapasitas_pengungsi').value = kapasitas;
+
+        // Hitung kebutuhan Sphere
+        hitungKebutuhanSphere(kapasitas);
+    }
+
+    function hitungKebutuhanSphere(kapasitas) {
+        // Air Kebutuhan Hidup (3 liter/orang/hari)
+        const airHidup = 3 * kapasitas;
+        document.getElementById('air_hidup').value = airHidup.toFixed(0);
+
+        // Air Kebersihan (6 liter/orang/hari)
+        const airKebersihan = 6 * kapasitas;
+        document.getElementById('air_kebersihan').value = airKebersihan.toFixed(0);
+
+        // Air untuk Memasak (6 liter/orang/hari)
+        const airMemasak = 6 * kapasitas;
+        document.getElementById('air_memasak').value = airMemasak.toFixed(0);
+
+        // Toilet Jangka Pendek (1:20)
+        const toiletPendek = Math.ceil(kapasitas / 20);
+        document.getElementById('toilet_pendek').value = toiletPendek;
+
+        // Toilet Jangka Panjang (1:50)
+        const toiletPanjang = Math.ceil(kapasitas / 50);
+        document.getElementById('toilet_panjang').value = toiletPanjang;
+
+        // Kalori per Hari (2100 kCal/orang/hari)
+        const kalori = 2100 * kapasitas;
+        document.getElementById('kalori').value = kalori.toFixed(0);
+
+        // Protein per Hari (53 g/orang/hari)
+        const protein = 53 * kapasitas;
+        document.getElementById('protein').value = protein.toFixed(0);
+
+        // Lemak per Hari (40 g/orang/hari)
+        const lemak = 40 * kapasitas;
+        document.getElementById('lemak').value = lemak.toFixed(0);
+    }
+    
+    // Panggil fungsi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        hitungSemua();
+    });
+</script>
+@endsection
